@@ -1,0 +1,21 @@
+#Thu May 26 07:14:30 EDT 2011
+formatter_profile=org.rubypeople.rdt.ui.default.ruby_profile
+color_ruby_global_bold=true
+rdocDirectoryPath=/usr/bin/rdoc1.8
+color_ruby_instance_variable=255,0,0
+useAnnotationsPrefPage=true
+eclipse.preferences.version=1
+org.eclipse.jdt.ui.visibility.order=B,V,R,
+color_ruby_symbol=63,146,183
+riDirectoryPath=/usr/bin/ri1.8
+color_ruby_multiline_comment=171,80,214
+editor_folding_default_rdoc=true
+color_ruby_regexp=0,0,255
+color_ruby_string=0,255,0
+outlinesortoption=T,SF,SM,F,C,M,
+org.rubypeople.rdt.ui.customtemplates=<?xml version\="1.0" encoding\="UTF-8"?><templates><template autoinsert\="true" context\="ruby" deleted\="false" description\="link_to(controller,action,id)" enabled\="true" id\="org.radrails.rails.ui.templates.linkTo5" name\="link_to">link_to "${text}", \n\t\t    \:controller \=&gt; "${controller}",\n\t\t    \:action \=&gt; "${action}", \n\t\t    \:id \=&gt; ${id}${cursor}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="Migration Create Column" enabled\="true" name\="mcc">t.column \:${name}, \:${type} ${cursor}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="Migration Rename Column" enabled\="true" name\="mrc">rename_column "${table_name}", "${column_name}", "${new_column_name}" ${cursor}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="Migration Remove Column" enabled\="true" name\="mrc">remove_column "${table_name}", "${column_name}" ${cursor}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="Migration Add Column" enabled\="true" name\="mac">add_column "${table_name}", "${column_name}", \:${type}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="map" enabled\="true" name\="map">map {|${item}| ${item}.${method}}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="Select" enabled\="true" name\="select">select {|${item}| ${conditions} }${cursor}</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="each do" enabled\="true" name\="each">each do |${item}|\n\t${cursor}\nend</template><template autoinsert\="true" context\="ruby" deleted\="false" description\="Update Active Record Attribute" enabled\="true" name\="update_attribute">update_attribute \:${attribute}, "${value}" ${cursor}</template></templates>
+color_ruby_singleline_comment=171,80,214
+useQuickDiffPrefPage=true
+color_ruby_default=255,255,255
+formatter_settings_version=1
+color_ruby_keyword=222,147,9

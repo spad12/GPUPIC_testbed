@@ -1,0 +1,13 @@
+#Thu May 26 07:14:30 EDT 2011
+fixTomcatHomeBug=fixed
+contextsDir=D\:\\Prabir\\Documents\\PortableApps\\Apache Tomcat\\conf\\Catalina\\localhost
+tomcatDir=D\:\\Prabir\\Documents\\PortableApps\\Apache Tomcat
+computeSourcePath=true
+managerUser=admin
+tomcatJRE=1247333267250
+tomcatConfigFile=D\:\\Prabir\\Documents\\PortableApps\\Apache Tomcat\\conf\\server.xml
+eclipse.preferences.version=1
+managerPassword=admin
+tomcatVersion=tomcatV6
+managerUrl=http\://localhost\:8080/manager
+projectsInSourcePath=scitechcafe;

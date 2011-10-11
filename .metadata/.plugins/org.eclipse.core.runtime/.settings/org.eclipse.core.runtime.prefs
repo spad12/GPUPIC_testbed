@@ -1,0 +1,6 @@
+#Thu May 26 07:14:28 EDT 2011
+content-types/org.eclipse.cdt.core.cxxSource/file-extensions=cu
+content-types/org.eclipse.cdt.core.cxxHeader/file-extensions=cuh
+content-types/org.eclipse.cdt.core.cxxSource/file-names=.cu
+eclipse.preferences.version=1
+content-types/org.eclipse.cdt.core.cxxHeader/file-names=.cuh

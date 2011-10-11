@@ -1,0 +1,26 @@
+#Thu May 26 07:14:26 EDT 2011
+org.eclipse.cdt.core.maxIndexDBCacheSizeMB=300
+org.eclipse.cdt.core.showSourceRootsAtTopLevelOfProject=true
+eclipse.preferences.version=1
+indexer/updatePolicy=0
+org.eclipse.cdt.core.taskTags=TODO,FIXME,XXX
+indexer/skipTypeReferences=false
+CODE_READER_CACHE=64
+org.eclipse.cdt.core.workspaceLanguageMappings=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?><workspace-mappings><content-type-mapping content-type\="org.eclipse.cdt.core.cHeader" language\="org.eclipse.cdt.core.g++"/><content-type-mapping content-type\="org.eclipse.cdt.core.cSource" language\="org.eclipse.cdt.core.g++"/><content-type-mapping content-type\="org.eclipse.cdt.core.cxxHeader" language\="org.eclipse.cdt.core.g++"/><content-type-mapping content-type\="org.eclipse.cdt.core.cxxSource" language\="org.eclipse.cdt.core.g++"/><content-type-mapping content-type\="org.eclipse.cdt.core.parser.upc.upcSource" language\="org.eclipse.photran.cdtinterface.fortran"/><content-type-mapping content-type\="org.eclipse.photran.core.fortranSource" language\="org.eclipse.photran.cdtinterface.fortran"/></workspace-mappings>
+environment/workspace/appendContributed=true
+environment/workspace/append=true
+macros/workspace=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<macros/>\n
+indexer/useHeuristicIncludeResolution=true
+indexer/skipImplicitReferences=false
+indexer/filesToParseUpFront=cstdarg, stdarg.h, stddef.h, sys/resource.h, ctime, sys/types.h, signal.h, cstdio
+indexer/skipReferences=false
+indexer/skipFilesLargerThanMB=50
+indexer/indexAllFiles=true
+indexer/indexerId=org.eclipse.cdt.core.fastIndexer
+org.eclipse.cdt.core.indexDBCacheSizePct=40
+org.eclipse.cdt.core.taskPriorities=normal,normal,normal
+environment/workspace=
+indexer/indexUnusedHeadersWithDefaultLang=false
+errorparser.default.ids=org.eclipse.cdt.core.GASErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GmakeErrorParser;org.eclipse.cdt.core.VCErrorParser;org.eclipse.cdt.core.CWDLocator;org.eclipse.cdt.core.MakeErrorParser;org.eclipse.photran.core.AbsoftErrorParser;org.eclipse.photran.core.G95FortranErrorParser;org.eclipse.photran.core.GFortranErrorParser;org.eclipse.photran.core.IntelFortranErrorParser;org.eclipse.photran.core.intel.IntelCompilerErrorParser;org.eclipse.photran.core.LaheyFortranErrorParser;org.eclipse.photran.core.NAGErrorParser;org.eclipse.photran.core.PGIErrorParser;ai3.errorparser.cuda.nvccerrorparser
+indexer/skipMacroReferences=false
+org.eclipse.cdt.core.codeReaderCache=300

@@ -1,0 +1,12 @@
+#Thu May 26 07:14:32 EDT 2011
+string.modelbuilder=defaultModelBilder
+rgb.intrinsics=96,0,192
+string.releasenotesversionshown=6.0.0.201009162109
+rgb.strings=255,0,0
+rgb.keywords=191,50,144
+integer.fixedformcommentcolum=80
+rgb.cpp=128,128,128
+rgb.comments=63,127,95
+boolean.freefolding=true
+rgb.identifiers=30,144,255
+eclipse.preferences.version=1

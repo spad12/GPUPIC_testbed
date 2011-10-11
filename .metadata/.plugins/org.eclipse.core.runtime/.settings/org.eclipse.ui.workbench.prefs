@@ -1,0 +1,41 @@
+#Thu May 26 07:14:27 EDT 2011
+org.eclipse.wst.jsdt.ui.ColoredLabels.qualifier=220,220,204
+org.eclipse.mylyn.tasks.ui.colors.incoming.background=77,77,77
+//org.eclipse.ui.commands/state/org.eclipse.cdt.debug.edc.ui.snapshotCreation/org.eclipse.ui.commands.radioState=manual
+UIActivities.org.eclipse.cdt.debug.edc.ui.edcActivity=true
+org.eclipse.jdt.ui.JavadocView.backgroundColor=101,101,101
+org.eclipse.mylyn.tasks.ui.colors.foreground.thisweek.scheduled=191,191,191
+org.eclipse.ui.workbench.ACTIVE_TAB_TEXT_COLOR=191,191,191
+coolBarVisible=false
+org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_END=77,77,77
+org.eclipse.team.cvs.ui.fontsandcolors.outgoing_change_background_color=191,191,191
+org.eclipse.ui.workbench.INACTIVE_TAB_BG_END=191,191,191
+org.eclipse.mylyn.tasks.ui.colors.foreground.task.active=191,191,191
+ColorsAndFontsPreferencePage.expandedCategories=Torg.eclipse.ui.workbenchMisc\tTorg.eclipse.cdt.ui.presentation\tTorg.eclipse.cdt.ui.CEditor.presentation\tTorg.eclipse.team.cvs.ui.fontsandcolors\tTorg.eclipse.debug.ui.presentation\tTorg.eclipse.mylyn.tasks.ui.presentation\tTorg.eclipse.compare.contentmergeviewer.TextMergeViewer\tTorg.eclipse.ui.presentation.default\tTorg.eclipse.mylyn.wikitext.ui.presentation
+org.eclipse.jdt.ui.ColoredLabels.inherited=119,119,255
+org.eclipse.mylyn.tasks.ui.colors.category.gradient.end=77,77,77
+org.eclipse.ui.workbench.ACTIVE_TAB_BG_START=30,144,255
+RUN_IN_BACKGROUND=true
+KEYS_PREFERENCE_SELECTED_TAB=1
+editors=<?xml version\="1.0" encoding\="UTF-8"?>\n<editors>\n<descriptor id\="org.eclipse.ui.browser.editorSupport" image\="$nl$/icons/obj16/internal_browser.gif" internal\="false" label\="Web Browser" launcher\="org.eclipse.ui.internal.browser.BrowserLauncher" openMode\="4" open_in_place\="false" plugin\="org.eclipse.ui.browser"/>\n</editors>
+org.eclipse.mylyn.tasks.ui.colors.category.gradient.start=77,77,77
+resourcetypes=<?xml version\="1.0" encoding\="UTF-8"?>\n<editors version\="3.1">\n<info extension\="in" name\="Makefile"/>\n<info extension\="yml" name\="*"/>\n<info extension\="" name\="generate"/>\n<info extension\="" name\="spawner"/>\n<info extension\="sql" name\="*"/>\n<info extension\="" name\="about"/>\n<info extension\="fcgi" name\="*"/>\n<info extension\="ac" name\="configure"/>\n<info extension\="am" name\="Makefile"/>\n<info extension\="shtml" name\="*">\n<editor id\="org.eclipse.ui.browser.editorSupport"/>\n</info>\n<info extension\="" name\="destroy"/>\n<info extension\="rhtml" name\="*"/>\n<info extension\="" name\="Rakefile"/>\n<info extension\="html" name\="*">\n<editor id\="org.eclipse.ui.browser.editorSupport"/>\n</info>\n<info extension\="htm" name\="*">\n<editor id\="org.eclipse.ui.browser.editorSupport"/>\n</info>\n<info extension\="" name\="reaper"/>\n<info extension\="rb" name\="*"/>\n<info extension\="rbw" name\="*"/>\n<info extension\="js" name\="*"/>\n<info extension\="in" name\="configure"/>\n<info extension\="yml" name\="database"/>\n<info extension\="cgi" name\="*"/>\n<info extension\="rxml" name\="*"/>\n<info extension\="" name\="spinner"/>\n<info extension\="rake" name\="*"/>\n<info extension\="" name\="console"/>\n<info extension\="rjs" name\="*"/>\n<info extension\="" name\="profiler"/>\n<info extension\="pda" name\="*"/>\n<info extension\="" name\="server"/>\n<info extension\="css" name\="*"/>\n<info extension\="m4" name\="*"/>\n</editors>
+org.eclipse.team.cvs.ui.fontsandcolors.ignored_resource_background_color=191,191,191
+REMOTE_COMMANDS_VIEW_BG_COLOR=77,77,77
+org.eclipse.jface.textfont=1|Consolas|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|0|3|2|1|49|Consolas;
+org.eclipse.ui.commands=<?xml version\="1.0" encoding\="UTF-8"?>\n<org.eclipse.ui.commands>\n<keyBinding commandId\="org.eclipse.ui.window.nextEditor" contextId\="org.eclipse.ui.contexts.window" keyConfigurationId\="org.eclipse.ui.defaultAcceleratorConfiguration" keySequence\="CTRL+TAB"/>\n</org.eclipse.ui.commands>
+ENABLED_DECORATORS=org.eclipse.cdt.ui.indexedFiles\:false,org.eclipse.cdt.managedbuilder.ui.excludedFile\:true,org.eclipse.mylyn.context.ui.decorator.interest\:true,org.eclipse.mylyn.tasks.ui.decorators.task\:true,org.eclipse.mylyn.team.ui.changeset.decorator\:true,org.eclipse.team.cvs.ui.decorator\:true,org.eclipse.ui.LinkedResourceDecorator\:true,org.eclipse.ui.VirtualResourceDecorator\:true,org.eclipse.ui.ContentTypeDecorator\:true,org.eclipse.ui.ResourceFilterDecorator\:false,
+org.eclipse.ui.workbench.TAB_TEXT_FONT=1|Consolas|10|0|GTK|1|;
+ColorsAndFontsPreferencePage.selectedElement=Corg.eclipse.mylyn.tasks.ui.colors.foreground.thisweek.scheduled
+perspectiveBarVisible=false
+eclipse.preferences.version=1
+CONTENT_ASSIST_BACKGROUND_COLOR=104,144,106
+org.eclipse.ui.workbench.ACTIVE_TAB_BG_END=0,0,255
+QUALIFIER_COLOR=77,77,77
+org.eclipse.ui.workbench.INACTIVE_TAB_BG_START=191,191,191
+org.eclipse.ui.workbench.VIEW_MESSAGE_TEXT_FONT=1|Consolas|10|0|GTK|1|;
+OUTGOING_COLOR=191,191,191
+org.eclipse.cdt.dsf.ui.staledata.background=77,77,77
+PLUGINS_NOT_ACTIVATED_ON_STARTUP=
+org.eclipse.ui.workbench.ACTIVE_NOFOCUS_TAB_BG_START=127,127,127
+UIActivities.org.eclipse.cdt.debug.dsfgdbActivity=true
