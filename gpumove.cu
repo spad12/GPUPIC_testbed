@@ -66,7 +66,7 @@ int main(void)
 	srand(13445);
 
 
-	int nptcls = pow(2.0,23.0);
+	int nptcls = pow(2,21);
 
 	dim3 cudaGridSize(1,1,1);
 	dim3 cudaBlockSize(1,1,1);
@@ -81,12 +81,12 @@ int main(void)
 	cutCreateTimer(&timer2);
 
 
-	float* Phi_h = (float*)malloc(35*35*35*sizeof(float));
-	int* Rho_h = (int*)malloc(35*35*35*sizeof(int));
+//	float* Phi_h = (float*)malloc(35*35*35*sizeof(float));
+//	int* Rho_h = (int*)malloc(35*35*35*sizeof(int));
 
-	float* phi_test_in = (float*)(malloc(testx*testy*testz*sizeof(float)));
-	float* phi_test_out = (float*)(malloc(testx*testy*testz*sizeof(float)));
-	cudaMatrixf phi_test_d(testx,testy,testz);
+//	float* phi_test_in = (float*)(malloc(testx*testy*testz*sizeof(float)));
+//	float* phi_test_out = (float*)(malloc(testx*testy*testz*sizeof(float)));
+//	cudaMatrixf phi_test_d(testx,testy,testz);
 
 
 	// Grid Information
@@ -105,19 +105,21 @@ int main(void)
 	cudaGridSize.x = nx/2;
 	cudaGridSize.y = ny/2;
 
+	printf("Setting up the Phi\n");
+
 	set_Phi<<<cudaGridSize,cudaBlockSize>>>(Phi);
 	cudaThreadSynchronize();
 	status = cudaGetLastError();
 	if(status != cudaSuccess){fprintf(stderr, "set phi %s\n", cudaGetErrorString(status));}
 
-	for(int i=0;i<35*35*35;i++)
+/*	for(int i=0;i<35*35*35;i++)
 	{
 		Phi_h[i] = 0.05;
 
 	}
-
+*/
 	// Particle Information lists
-
+	printf("Setting up the particle list\n");
 	 XPlist particles_h(nptcls,host);
 
 	XPlist particles_d2(nptcls,device);
@@ -144,7 +146,7 @@ int main(void)
 
 	 // Copy particles from the host to the device
 
-	printf("Copying particle list to GPU");
+	printf("Copying particle list to GPU\n");
 	 XPlistCopy(particles_d, particles_h,nptcls, cudaMemcpyHostToDevice);
 	 XPlistCopy(particles_d2, particles_h,nptcls, cudaMemcpyHostToDevice);
 		cudaThreadSynchronize();
@@ -173,6 +175,7 @@ int main(void)
 
 
 	// sort particles if particle list is not already sorted
+	printf("Sorting the particle list\n");
 	particles_d.sort(gridspacing, grid_i_dims);
 	cudaThreadSynchronize();
 
@@ -231,7 +234,7 @@ int main(void)
 
 	//	printf(" \n finished one move step \n \n");
 		cudaThreadSynchronize();
-
+/*
 		cutResetTimer( timer2 );
 		cutStartTimer(timer2);
 		Phi.cudaMatrixcpy(phi_test_in,cudaMemcpyDeviceToHost);
@@ -249,6 +252,7 @@ int main(void)
 		phi_test_d.cudaMatrixcpy(phi_test_out,cudaMemcpyHostToDevice);
 		cutStopTimer(timer2);
 		times[0].x += cutGetTimerValue(timer2);
+		*/
 
 
 

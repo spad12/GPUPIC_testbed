@@ -896,6 +896,7 @@ Particlebin* generate_bins(XPlist particles,int gridsize,int nptcls)
 	cudaGridSize.x = (gridsize+cudaBlockSize.x-1)/cudaBlockSize.x;
 	CUDA_SAFE_KERNEL((populate_bin_data<<<cudaGridSize,cudaBlockSize>>>
 									(bins_out,ifirstp_d,ilastp_d,gridsize)));
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
 	cudaFree(ifirstp_d);
 	cudaFree(ilastp_d);
@@ -1084,7 +1085,7 @@ void rough_test(int nptcls,int gridsize)
 
 		if((rand()%1000) < 100)
 		{
-			temp_index = pbinindex_h[i] + rand()%5 - 2;
+			temp_index = pbinindex_h[i] + rand()%3 - 1;
 			if(temp_index < 0)
 			{
 				temp_index = gridsize-1;
@@ -1229,8 +1230,14 @@ void rough_test(int nptcls,int gridsize)
 int main(void)
 {
 	cudaSetDevice(1);
-	int nptcls;
-	int gridsize;
+	int nptcls = pow(2,24);
+	int gridsize = 4096;
+	for(int i=0;i<1;i++)
+	{
+	rough_test(nptcls,gridsize);
+	}
+
+	/*
 	for(int i=0;i<5;i++)
 	{
 		for(int j=256;j<8192;j*=2)
@@ -1240,6 +1247,7 @@ int main(void)
 			rough_test(nptcls,gridsize);
 		}
 	}
+	*/
 
 
 	return 0;

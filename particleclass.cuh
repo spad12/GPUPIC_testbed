@@ -5,7 +5,7 @@
  */
 
 #include "constants.cuh"
-#include "radixSort/radixsort.h"
+#include <thrust/sort.h>
 
 // Define Allocation functor classes
 
@@ -260,21 +260,25 @@ __global__ void sort_remaining(XPlist particles, XPlist particles_temp, unsigned
 	unsigned int idx = threadIdx.x;
 	unsigned int gidx = blockIdx.x*blockDim.x+idx;
 
-	__shared__ XPdata data[threadsPerBlock];
-	__shared__ int4 index[threadsPerBlock];
+	XPdata data;
+	int4 index;
 
 	if(gidx < particles.nptcls)
 	{
 
 		int ogidx = index_array[gidx]; // What particle is this thread relocating
 
-		data[idx] = particles.data[ogidx];
+		data = particles.data[ogidx];
 
-		index[idx] = particles.index[ogidx];
+		index = particles.index[ogidx];
+	}
+	__syncthreads();
 
-		particles_temp.data[gidx] = data[idx];
+	if(gidx < particles.nptcls)
+	{
+		particles_temp.data[gidx] = data;
 
-		particles_temp.index[gidx] = index[idx];
+		particles_temp.index[gidx] = index;
 
 
 
@@ -335,27 +339,41 @@ __host__ void XPlist::sort(float3 Pgridspacing, int3 Pgrid_i_dims)
 
 
 	// Create the RadixSort object
-	nvRadixSort::RadixSort radixsort(nptcls);
+	//nvRadixSort::RadixSort radixsort(nptcls);
 
 	// Sort the key / value pairs
-	radixsort.sort(d_keys,d_values,nptcls,32);
+	//radixsort.sort(d_keys,d_values,nptcls,32);
+
+	// wrap raw device pointers with a device_ptr
+	thrust::device_ptr<uint> thrust_keys(d_keys);
+	thrust::device_ptr<uint> thrust_values(d_values);
+
+	//printf("Launcing thrust sort\n");
+	thrust::sort_by_key(thrust_keys,thrust_keys+nptcls,thrust_values);
+
 	cudaThreadSynchronize();
 	status = cudaGetLastError();
 	if(status != cudaSuccess){fprintf(stderr, "radix sort %s\n", cudaGetErrorString(status));}
 
 
 	// sort the rest of the particle data
+	//printf("Reordering particle data\n");
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
 	sort_remaining<<<cudaGridSize,threadsPerBlock>>>(*this,temp_list,XP_index_array);
 	cudaThreadSynchronize();
 	status = cudaGetLastError();
 	if(status != cudaSuccess){fprintf(stderr, "sort_remaining %s\n", cudaGetErrorString(status));}
+	cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
-	XPlistCopy(*this,temp_list,nptcls,cudaMemcpyDeviceToDevice);
+	//XPlistCopy(*this,temp_list,nptcls,cudaMemcpyDeviceToDevice);
 	cudaThreadSynchronize();
+
+	XPlistFree();
+
+	*this = temp_list;
 
 	cudaFree(XP_index_array);
 	cudaFree(cellindex_temp);
-	temp_list.XPlistFree();
 	cudaThreadSynchronize();
 	return;
 
@@ -991,7 +1009,7 @@ __global__ void XPlist_move_kernel_sorted_shared(XPlist particles,
 
 	__shared__ int reduce_array[threadsPerBlock];
 
-/*
+
 	reduce_array[idx] = 0;
 
 	if(idx < blockinfo[bidx].z)
@@ -1003,7 +1021,7 @@ __global__ void XPlist_move_kernel_sorted_shared(XPlist particles,
 	temprho = reduce(reduce_array,didileave);
 
 	__syncthreads();
-*/
+
 	if((idx == 0)&&(gidx<particles.nptcls))
 	{
 		nptcls_left[bidx] = 0;
@@ -1018,32 +1036,32 @@ __syncthreads();
 	{
 	case 0:
 		Phi_local[0] = Phi(location.x,location.y,location.z);
-		//atomicAdd(&rho(location.x,location.y,location.z),temprho);
+		atomicAdd(&rho(location.x,location.y,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 1:
 		Phi_local[1] = Phi(location.x+1,location.y,location.z);
-		//atomicAdd(&rho(location.x+1,location.y,location.z),temprho);
+		atomicAdd(&rho(location.x+1,location.y,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 2:
 		Phi_local[2] = Phi(location.x,location.y+1,location.z);
-		//atomicAdd(&rho(location.x,location.y+1,location.z),temprho);
+		atomicAdd(&rho(location.x,location.y+1,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 3:
 		Phi_local[3] = Phi(location.x+1,location.y+1,location.z);
-		//atomicAdd(&rho(location.x+1,location.y+1,location.z),temprho);
+		atomicAdd(&rho(location.x+1,location.y+1,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 4:
 		Phi_local[4] = Phi(location.x,location.y,location.z+1);
-		//atomicAdd(&rho(location.x,location.y,location.z+1),temprho);
+		atomicAdd(&rho(location.x,location.y,location.z+1),temprho);
 		__threadfence_block();
 		break;
 	case 5:
 		Phi_local[5] = Phi(location.x+1,location.y,location.z+1);
-		//atomicAdd(&rho(location.x+1,location.y,location.z+1),temprho);
+		atomicAdd(&rho(location.x+1,location.y,location.z+1),temprho);
 		__threadfence_block();
 		break;
 	case 6:
@@ -1053,13 +1071,13 @@ __syncthreads();
 		break;
 	case 7:
 		Phi_local[7] = Phi(location.x+1,location.y+1,location.z+1);
-		//atomicAdd(&rho(location.x+1,location.y+1,location.z+1),temprho);
+		atomicAdd(&rho(location.x+1,location.y+1,location.z+1),temprho);
 		__threadfence_block();
 		break;
 	default:
 		break;
 	}
-/*
+
 __syncthreads();
 
 	if(idx < blockinfo[bidx].z)
@@ -1090,7 +1108,7 @@ __syncthreads();
 				particles.index[gidx].y * Pgrid_i_dims.x + particles.index[gidx].x;
 
 	}
-*/
+
 
 }
 
