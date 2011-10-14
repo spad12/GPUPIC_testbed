@@ -5,7 +5,8 @@
  */
 
 #include "constants.cuh"
-#include "radixSort/radixsort.h"
+#include <thrust/sort.h>
+#include <thrust/scan.h>
 
 // Define Allocation functor classes
 
@@ -45,10 +46,15 @@ class XPlist
 {
 public:
 
-	XPdata* data;
+	float* px;
+	float* py;
+	float* pz;
+	float* vx;
+	float* vy;
+	float* vz;
 
 	// Position indices
-	int4* index; // x = nx, y = ny, z = nz, w = cellindex
+	int* index; // x = nx, y = ny, z = nz, w = cellindex
 
 	int nptcls;
 
@@ -102,13 +108,23 @@ public:
 	{
 		if(!location)
 		{
-			cudaFreeHost(data);
+			cudaFreeHost(px);
+			cudaFreeHost(py);
+			cudaFreeHost(pz);
+			cudaFreeHost(vx);
+			cudaFreeHost(vy);
+			cudaFreeHost(vz);
 			cudaFreeHost(index);
 
 		}
 		else
 		{
-			cudaFree(data);
+			cudaFree(px);
+			cudaFree(py);
+			cudaFree(pz);
+			cudaFree(vx);
+			cudaFree(vy);
+			cudaFree(vz);
 			cudaFree(index);
 
 		}
@@ -129,10 +145,15 @@ private:
 template<class O>
 __host__ void XPlist::XPlist_allocate(O op)
 {
-	int intsize = sizeof(int4)*nptcls;
-	int floatsize = sizeof(XPdata)*nptcls;
+	int intsize = sizeof(int)*nptcls;
+	int floatsize = sizeof(float)*nptcls;
 
-		op((void**)&data,floatsize);
+		op((void**)&px,floatsize);
+		op((void**)&py,floatsize);
+		op((void**)&pz,floatsize);
+		op((void**)&vx,floatsize);
+		op((void**)&vy,floatsize);
+		op((void**)&vz,floatsize);
 		op((void**)&index,intsize);
 
 	return;
@@ -141,10 +162,15 @@ __host__ void XPlist::XPlist_allocate(O op)
 
 __device__ void XPlist::XPlist_shared(int nptcls_in)
 {
-	__shared__ XPdata data_temp[threadsPerBlock];
-	__shared__ int4 index_temp[threadsPerBlock];
+	__shared__ float data_temp[6*threadsPerBlock];
+	__shared__ int index_temp[threadsPerBlock];
 
-	data = data_temp;
+	px = data_temp;
+	py = px+threadsPerBlock;
+	pz = py+threadsPerBlock;
+	vx = pz+threadsPerBlock;
+	vy = vx+threadsPerBlock;
+	vz = vy+threadsPerBlock;
 	index = index_temp;
 
 	location = device;
@@ -156,10 +182,15 @@ __device__ void XPlist::XPlist_shared(int nptcls_in)
 __host__ void XPlistCopy(XPlist dst, XPlist src,int nptcls_in, enum cudaMemcpyKind kind)
 {
 	dst.nptcls = src.nptcls;
-	size_t intsize = sizeof(int4)*(nptcls_in);
-	size_t floatsize = sizeof(XPdata)*(nptcls_in);
+	size_t intsize = sizeof(int)*(nptcls_in);
+	size_t floatsize = sizeof(float)*(nptcls_in);
 
-	cudaMemcpy(dst.data,src.data,floatsize,kind);
+	cudaMemcpy(dst.px,src.px,floatsize,kind);
+	cudaMemcpy(dst.py,src.py,floatsize,kind);
+	cudaMemcpy(dst.pz,src.pz,floatsize,kind);
+	cudaMemcpy(dst.vx,src.vx,floatsize,kind);
+	cudaMemcpy(dst.vy,src.vy,floatsize,kind);
+	cudaMemcpy(dst.vz,src.vz,floatsize,kind);
 	cudaMemcpy(dst.index,src.index,intsize,kind);
 
 }
@@ -187,6 +218,9 @@ __host__ void XPlist::random_distribution(int3 gridDims,float3 gridSpacing)
 		return;
 	}
 
+	int xindex;
+	int yindex;
+	int zindex;
 	float3 gridlim;
 	gridlim.x = gridDims.x*gridSpacing.x;
 	gridlim.y = gridDims.y*gridSpacing.y;
@@ -196,20 +230,20 @@ __host__ void XPlist::random_distribution(int3 gridDims,float3 gridSpacing)
 	for(int i = 0;i < nptcls; i++)
 	{
 
-		data[i].px = box_muller(gridlim.x/4.0,gridlim.x/2.0);
-		data[i].py = box_muller(gridlim.y/4.0,gridlim.y/2.0);
-		data[i].pz = box_muller(gridlim.z/4.0,gridlim.z/2.0);
+		px[i] = box_muller(gridlim.x/4.0,gridlim.x/2.0);
+		py[i] = box_muller(gridlim.y/4.0,gridlim.y/2.0);
+		pz[i] = box_muller(gridlim.z/4.0,gridlim.z/2.0);
 
-		data[i].vx = box_muller(100.0/1000.0,0);
-		data[i].vy = box_muller(100.0/1000.0,0);
-		data[i].vz = box_muller(100.0/1000.0,0);
+		vx[i] = box_muller(100.0/1000.0,0);
+		vy[i] = box_muller(100.0/1000.0,0);
+		vz[i] = box_muller(100.0/1000.0,0);
 
-		index[i].x = floor(data[i].px/gridSpacing.x);
-		index[i].y = floor(data[i].py/gridSpacing.y);
-		index[i].z = floor(data[i].pz/gridSpacing.z);
+		xindex = floor(px[i]/gridSpacing.x);
+		yindex = floor(py[i]/gridSpacing.y);
+		zindex = floor(pz[i]/gridSpacing.z);
 
-		index[i].w = index[i].z * gridDims.x * gridDims.y +
-				index[i].y * gridDims.x + index[i].x;
+		index[i] = zindex* gridDims.x * gridDims.y +
+				yindex * gridDims.x + xindex;
 		//printf("particle %i, at (%f,%f,%f) index (%i,%i,%i) cellindex %i \n",i,px[i],py[i],pz[i],nx[i],ny[i],nz[i],cellindex[i]);
 	}
 }
@@ -222,7 +256,7 @@ __global__ void find_cell_index_kernel(XPlist particles,
 
 	if(gidx < particles.nptcls)
 	{
-		cellindex_out[gidx] = particles.index[gidx].w;
+		cellindex_out[gidx] = particles.index[gidx];
 		 //printf("particle %i, at (%f,%f,%f) index (%i,%i,%i) cellindex %i \n",gidx,x[gidx],y[gidx],z[gidx],nx[gidx],ny[gidx],nz[gidx],cellindex[gidx]);
 
 	}
@@ -260,21 +294,36 @@ __global__ void sort_remaining(XPlist particles, XPlist particles_temp, unsigned
 	unsigned int idx = threadIdx.x;
 	unsigned int gidx = blockIdx.x*blockDim.x+idx;
 
-	__shared__ XPdata data[threadsPerBlock];
-	__shared__ int4 index[threadsPerBlock];
+	XPdata data;
+	int index;
 
 	if(gidx < particles.nptcls)
 	{
 
 		int ogidx = index_array[gidx]; // What particle is this thread relocating
 
-		data[idx] = particles.data[ogidx];
+		data.px = particles.px[ogidx];
+		data.py = particles.py[ogidx];
+		data.pz = particles.pz[ogidx];
 
-		index[idx] = particles.index[ogidx];
+		data.vx = particles.vx[ogidx];
+		data.vy = particles.vy[ogidx];
+		data.vz = particles.vz[ogidx];
 
-		particles_temp.data[gidx] = data[idx];
+		index = particles.index[ogidx];
+	}
+	__syncthreads();
+	if(gidx < particles.nptcls)
+	{
+		particles_temp.px[gidx] = data.px;
+		particles_temp.py[gidx] = data.py;
+		particles_temp.pz[gidx] = data.pz;
 
-		particles_temp.index[gidx] = index[idx];
+		particles_temp.vx[gidx] = data.vx;
+		particles_temp.vy[gidx] = data.vy;
+		particles_temp.vz[gidx] = data.vz;
+
+		particles_temp.index[gidx] = index;
 
 
 
@@ -333,7 +382,7 @@ __host__ void XPlist::sort(float3 Pgridspacing, int3 Pgrid_i_dims)
 	if(status != cudaSuccess){fprintf(stderr, "Write_xpindex_array %s\n", cudaGetErrorString(status));}
 
 
-
+/*
 	// Create the RadixSort object
 	nvRadixSort::RadixSort radixsort(nptcls);
 
@@ -342,6 +391,14 @@ __host__ void XPlist::sort(float3 Pgridspacing, int3 Pgrid_i_dims)
 	cudaThreadSynchronize();
 	status = cudaGetLastError();
 	if(status != cudaSuccess){fprintf(stderr, "radix sort %s\n", cudaGetErrorString(status));}
+*/
+
+	// wrap raw device pointers with a device_ptr
+	thrust::device_ptr<uint> thrust_keys(d_keys);
+	thrust::device_ptr<uint> thrust_values(d_values);
+
+	// Sort the data
+	thrust::sort_by_key(thrust_keys,thrust_keys+nptcls,thrust_values);
 
 
 	// sort the rest of the particle data
@@ -370,10 +427,10 @@ __global__ void count_particles(XPlist particles,int2* cellInfo, int nptcls, int
 
 	if(gidx < nptcls-1)
 	{
-		XPcellindex[idx] = particles.index[gidx].w;
+		XPcellindex[idx] = particles.index[gidx];
 		if((idx==threadsPerBlock-1)||(gidx == nptcls-2))
 		{
-			XPcellindex[idx+1] = particles.index[gidx+1].w;
+			XPcellindex[idx+1] = particles.index[gidx+1];
 		}
 	}
 	__syncthreads();
@@ -381,10 +438,13 @@ __global__ void count_particles(XPlist particles,int2* cellInfo, int nptcls, int
 	{
 		if(XPcellindex[idx] != XPcellindex[idx+1])
 		{
-			cellindex = XPcellindex[idx]+1;
+			cellindex = XPcellindex[idx+1];
 
 			// Set index of first particle in next cell
-			cellInfo[cellindex].x = gidx+1;
+			for(int i=XPcellindex[idx]+1;i<=cellindex;i++)
+			{
+				cellInfo[i].x = gidx+1;
+			}
 			//printf("(GPU) %i particles before cell %i \n",gidx+1,XPcellIndex[gidx]+1);
 		}
 	}
@@ -422,7 +482,7 @@ __global__ void fix_cellinfo(int2* cellinfo,int ncells)
 
 }
 
-__global__ void count_blocks(int2* cellinfo,int* redoxtemp,int* blocksize,int ncells)
+__global__ void count_blocks(int2* cellinfo,int* nblocks_percell,int* redoxtemp,int* blocksize,int ncells)
 {
 	int idx = threadIdx.x;
 	int gidx = blockIdx.x*blockDim.x+idx;
@@ -447,6 +507,7 @@ __global__ void count_blocks(int2* cellinfo,int* redoxtemp,int* blocksize,int nc
 		tempCellInfo[idx] = ceil(temp);
 
 		cellinfo[gidx].y = tempCellInfo[idx];
+		nblocks_percell[gidx] = tempCellInfo[idx];
 	}
 		__syncthreads();
 		//if(gidx < ncells)
@@ -468,29 +529,36 @@ __global__ void count_blocks(int2* cellinfo,int* redoxtemp,int* blocksize,int nc
 
 }
 
-void populate_blockinfo(int3* blockinfo, int2* cellinfo, int ncells)
+__global__
+void populate_blockinfo(int3* blockinfo, int2* cellinfo,int* ifirstblock, int ncells)
 {
+	int idx = threadIdx.x;
+	int gidx = blockIdx.x*blockDim.x+idx;
+
+
 	int k = 0;
 	int firstParticle;
 
-	for(int i = 0;i<ncells;i++)
+	if(gidx < ncells-1)
 	{
-		firstParticle = cellinfo[i].x;
 
-		for(int j = 0;j<cellinfo[i].y;j++)
+		firstParticle = cellinfo[gidx].x;
+
+		for(int j = 0;j<cellinfo[gidx].y;j++)
 		{
-			blockinfo[k].x = i;
+			k = ifirstblock[gidx]+j;
+			blockinfo[k].x = gidx;
 			blockinfo[k].y = firstParticle;
-			if(j < cellinfo[i].y-1)
+
+			if(j < cellinfo[gidx].y-1)
 			{
 				blockinfo[k].z = threadsPerBlock;
 				firstParticle += threadsPerBlock;
 			}
 			else
 			{
-				blockinfo[k].z = cellinfo[i+1].x-firstParticle;
+				blockinfo[k].z = cellinfo[gidx+1].x-firstParticle;
 			}
-			k++;
 		}
 	}
 
@@ -649,13 +717,13 @@ __global__ void condense_list(XPlist particles, XPlist particles_moved,
 		if(!didimove[gidx])
 		{
 			// If the Particle didn't move just use its offset to determine where it will go
-			particles_out.data[gidx-offsets[gidx]] = particles.data[gidx];
+			particles_out.px[gidx-offsets[gidx]] = particles.px[gidx];
 			particles_out.index[gidx-offsets[gidx]] = particles.index[gidx];
 		}
 		else
 		{
 			// The particle moved into a new cell. We are going to use atomic functions so that it can be safely inserted into the list
-			cellindex = particles.index[gidx].w;
+			cellindex = particles.index[gidx];
 
 			// Safely read what the current available index is and increment it by 1
 			midx = atomicAdd(cellcounter+cellindex,1)+cellinfo[cellindex+1].x;
@@ -694,30 +762,30 @@ __device__ void XPlist::periodic_boundary(int3 griddims,float3 gridspacing,bool 
 	gridlims.y = gridspacing.y*griddims.y;
 	gridlims.z = gridspacing.z*griddims.z;
 
-	if(data[gidx].px < 0)
+	if(px[gidx] < 0)
 	{
-		data[gidx].px += gridlims.x;
+		px[gidx] += gridlims.x;
 
 	}
-	if(data[gidx].py< 0)
+	if(py[gidx] < 0)
 	{
-		data[gidx].py += gridlims.y;
+		py[gidx] += gridlims.y;
 	}
-	if(data[gidx].pz < 0)
+	if(pz[gidx] < 0)
 	{
-		data[gidx].pz += gridlims.z;
+		pz[gidx] += gridlims.z;
 	}
-	if(data[gidx].px>gridlims.x)
+	if(px[gidx] >gridlims.x)
 	{
-		data[gidx].px -= gridlims.x;
+		px[gidx] -= gridlims.x;
 	}
-	if(data[gidx].py>gridlims.y)
+	if(py[gidx] >gridlims.y)
 	{
-		data[gidx].py -= gridlims.y;
+		py[gidx] -= gridlims.y;
 	}
-	if(data[gidx].pz>gridlims.z)
+	if(pz[gidx] >gridlims.z)
 	{
-		data[gidx].pz -= gridlims.z;
+		pz[gidx] -= gridlims.z;
 	}
 
 	return;
@@ -760,9 +828,9 @@ __global__ void XPlist_move_kernel_unsorted_cached(XPlist particles,
 
 	if(gidx < particles.nptcls)
 	{
-		nx = particles.index[gidx].x;
-		ny = particles.index[gidx].y;
-		nz = particles.index[gidx].z;
+		nx = floor(particles.px[gidx]/Pgridspacing.x);
+		ny = floor(particles.py[gidx]/Pgridspacing.y);
+		nz = floor(particles.pz[gidx]/Pgridspacing.z);
 
 
 		for(int k=0;k<2;k++)
@@ -884,9 +952,9 @@ __global__ void XPlist_move_kernel_semisorted_cached(XPlist particles,
 
 	if(gidx < particles.nptcls)
 	{
-		nx = particles.index[gidx].x;
-		ny = particles.index[gidx].y;
-		nz = particles.index[gidx].z;
+		nx = floor(particles.px[gidx]/Pgridspacing.x);
+		ny = floor(particles.py[gidx]/Pgridspacing.y);
+		nz = floor(particles.pz[gidx]/Pgridspacing.z);
 
 		for(int k=0;k<2;k++)
 		{
@@ -985,13 +1053,14 @@ __global__ void XPlist_move_kernel_sorted_shared(XPlist particles,
 
 	int temprho;
 	int temprho2;
+	int3 index;
 
 	__shared__ int3 location;
 	__shared__ float Phi_local[8];
 
 	__shared__ int reduce_array[threadsPerBlock];
 
-/*
+
 	reduce_array[idx] = 0;
 
 	if(idx < blockinfo[bidx].z)
@@ -1003,13 +1072,13 @@ __global__ void XPlist_move_kernel_sorted_shared(XPlist particles,
 	temprho = reduce(reduce_array,didileave);
 
 	__syncthreads();
-*/
+
 	if((idx == 0)&&(gidx<particles.nptcls))
 	{
 		nptcls_left[bidx] = 0;
-		location.x = particles.index[gidx].x;
-		location.y = particles.index[gidx].y;
-		location.z = particles.index[gidx].z;
+		location.x = floor(particles.px[gidx]/Pgridspacing.x);
+		location.y = floor(particles.py[gidx]/Pgridspacing.y);
+		location.z = floor(particles.pz[gidx]/Pgridspacing.z);
 		__threadfence_block();
 	}
 __syncthreads();
@@ -1018,32 +1087,32 @@ __syncthreads();
 	{
 	case 0:
 		Phi_local[0] = Phi(location.x,location.y,location.z);
-		//atomicAdd(&rho(location.x,location.y,location.z),temprho);
+		atomicAdd(&rho(location.x,location.y,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 1:
 		Phi_local[1] = Phi(location.x+1,location.y,location.z);
-		//atomicAdd(&rho(location.x+1,location.y,location.z),temprho);
+		atomicAdd(&rho(location.x+1,location.y,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 2:
 		Phi_local[2] = Phi(location.x,location.y+1,location.z);
-		//atomicAdd(&rho(location.x,location.y+1,location.z),temprho);
+		atomicAdd(&rho(location.x,location.y+1,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 3:
 		Phi_local[3] = Phi(location.x+1,location.y+1,location.z);
-		//atomicAdd(&rho(location.x+1,location.y+1,location.z),temprho);
+		atomicAdd(&rho(location.x+1,location.y+1,location.z),temprho);
 		__threadfence_block();
 		break;
 	case 4:
 		Phi_local[4] = Phi(location.x,location.y,location.z+1);
-		//atomicAdd(&rho(location.x,location.y,location.z+1),temprho);
+		atomicAdd(&rho(location.x,location.y,location.z+1),temprho);
 		__threadfence_block();
 		break;
 	case 5:
 		Phi_local[5] = Phi(location.x+1,location.y,location.z+1);
-		//atomicAdd(&rho(location.x+1,location.y,location.z+1),temprho);
+		atomicAdd(&rho(location.x+1,location.y,location.z+1),temprho);
 		__threadfence_block();
 		break;
 	case 6:
@@ -1053,13 +1122,13 @@ __syncthreads();
 		break;
 	case 7:
 		Phi_local[7] = Phi(location.x+1,location.y+1,location.z+1);
-		//atomicAdd(&rho(location.x+1,location.y+1,location.z+1),temprho);
+		atomicAdd(&rho(location.x+1,location.y+1,location.z+1),temprho);
 		__threadfence_block();
 		break;
 	default:
 		break;
 	}
-/*
+
 __syncthreads();
 
 	if(idx < blockinfo[bidx].z)
@@ -1074,23 +1143,23 @@ __syncthreads();
 
 
 		//__syncthreads();
-		particles.data[gidx].px += particles.data[gidx].vx*dt*myphi;
-		particles.data[gidx].py += particles.data[gidx].vy*dt*myphi;
-		particles.data[gidx].pz += particles.data[gidx].vz*dt*myphi;
+		particles.px[gidx] += particles.vx[gidx]*dt*myphi;
+		particles.py[gidx] += particles.vy[gidx]*dt*myphi;
+		particles.pz[gidx] += particles.vz[gidx]*dt*myphi;
 
 		// Apply periodic boundary condition
 
 		particles.periodic_boundary(Pgrid_i_dims,Pgridspacing,0);
 
-		particles.index[gidx].x = floor(particles.data[gidx].px/Pgridspacing.x);
-		particles.index[gidx].y = floor(particles.data[gidx].py/Pgridspacing.y);
-		particles.index[gidx].z = floor(particles.data[gidx].pz/Pgridspacing.z);
+		index.x = floor(particles.px[gidx]/Pgridspacing.x);
+		index.y = floor(particles.py[gidx]/Pgridspacing.y);
+		index.z = floor(particles.pz[gidx]/Pgridspacing.z);
 
-		particles.index[gidx].w = particles.index[gidx].z * Pgrid_i_dims.x * Pgrid_i_dims.y +
-				particles.index[gidx].y * Pgrid_i_dims.x + particles.index[gidx].x;
+		particles.index[gidx] = index.z * Pgrid_i_dims.x * Pgrid_i_dims.y +
+				index.y * Pgrid_i_dims.x + index.x;
 
 	}
-*/
+
 
 }
 
@@ -1247,7 +1316,7 @@ __global__ void inject_new_particles_kernel(XPlist particles,XPlist new_particle
 		{
 			//printf(" particle %i pulling particle %i \n",gidx,offsets[gidx]);
 
-			particles.data[gidx] = new_particles.data[offsets[gidx]-1];
+			particles.px[gidx] = new_particles.px[offsets[gidx]-1];
 
 			particles.index[gidx] = new_particles.index[offsets[gidx]-1];
 			__threadfence_system();
@@ -1420,8 +1489,10 @@ __host__ void XPlist::move_shared_sorted(float3 Pgridspacing, int3 Pgrid_i_dims,
 	int2* cellInfo_h = (int2*)malloc((gridSize+1)*sizeof(int2));
 
 	int2* cellInfo_d;
+	int* nblocks_per_cell;
 //	printf("CudaMalloc2 \n");
 	cudaMalloc((void**)&cellInfo_d,(gridSize+1)*sizeof(int2));
+	cudaMalloc((void**)&nblocks_per_cell,(gridSize+1)*sizeof(int));
 	cudaThreadSynchronize();
 	cudaMemset(cellInfo_d,0,(gridSize+1)*sizeof(int2));
 
@@ -1455,24 +1526,30 @@ __host__ void XPlist::move_shared_sorted(float3 Pgridspacing, int3 Pgrid_i_dims,
 	 // Fix the cellinfo array for errors from cells with 0 particles
 	cudaGridSize = (gridSize+threadsPerBlock-1)/threadsPerBlock;
 
+/*
 //	printf("Launching Fix Cellinfo Kernel \n");
 	fix_cellinfo<<<cudaGridSize, threadsPerBlock>>>(cellInfo_d,gridSize);
 	cudaThreadSynchronize();
 	status = cudaGetLastError();
 	 if(status != cudaSuccess){fprintf(stderr, "Fix Cell Info %s\n", cudaGetErrorString(status));}
-
+*/
 	// Figure out how many thread blocks are needed for each cell and the total number of thread blocks
 
 //	printf("Launching Count Blocks Kernel \n");
-	count_blocks<<<cudaGridSize, threadsPerBlock>>>(cellInfo_d,redoxtemp_d,nBlocks_d,gridSize);
+	CUDA_SAFE_KERNEL((count_blocks<<<cudaGridSize, threadsPerBlock>>>(cellInfo_d,nblocks_per_cell,redoxtemp_d,nBlocks_d,gridSize)));
 	cudaThreadSynchronize();
 	status = cudaGetLastError();
 	 if(status != cudaSuccess){fprintf(stderr, "count blocks %s\n", cudaGetErrorString(status));}
-	cudaMemcpy(cellInfo_h,cellInfo_d,(gridSize+1)*sizeof(int2),cudaMemcpyDeviceToHost);
-	cudaMemcpy(nBlocks_h,nBlocks_d,sizeof(int),cudaMemcpyDeviceToHost);
+//	cudaMemcpy(cellInfo_h,cellInfo_d,(gridSize+1)*sizeof(int2),cudaMemcpyDeviceToHost);
+//	cudaMemcpy(nBlocks_h,nBlocks_d,sizeof(int),cudaMemcpyDeviceToHost);
 	status = cudaGetLastError();
 	 if(status != cudaSuccess){fprintf(stderr, "cpy block count %s\n", cudaGetErrorString(status));}
 	cudaThreadSynchronize();
+
+	// Do a scan to get the first block in each cell
+	thrust::device_ptr<int> thrust_data(nblocks_per_cell);
+	thrust::exclusive_scan(thrust_data,thrust_data+gridSize+1,thrust_data);
+
 
 	//printf(" nblocks = %i \n",nBlocks_h[0]);
 
@@ -1488,7 +1565,7 @@ __host__ void XPlist::move_shared_sorted(float3 Pgridspacing, int3 Pgrid_i_dims,
 
 	// Populate blockInfo
 	cudaGridSize1 = nBlocks_h[0];
-	cudaMalloc((void**)&blockinfo_d,nBlocks_h[0]*sizeof(int3));
+	cudaMalloc((void**)&blockinfo_d,(nBlocks_h[0]+1)*sizeof(int3));
 	blockinfo_h = (int3*)malloc(nBlocks_h[0]*sizeof(int3));
 //	printf("Finished Move Kernel \n");
 
@@ -1497,11 +1574,12 @@ __host__ void XPlist::move_shared_sorted(float3 Pgridspacing, int3 Pgrid_i_dims,
 	cudaMalloc((void**)&didileave,nptcls*sizeof(int));
 	cudaMemset(nptcls_left_d,0,(cudaGridSize1+1)*sizeof(int));
 
-	populate_blockinfo(blockinfo_h,cellInfo_h,gridSize);
+	cudaGridSize.x = (gridSize+threadsPerBlock-1)/threadsPerBlock;
+	cudaGridSize.y = 1;
+	cudaBlockSize.x = threadsPerBlock;
+	CUDA_SAFE_KERNEL((populate_blockinfo<<<cudaGridSize,cudaBlockSize>>>(blockinfo_d,cellInfo_d,nblocks_per_cell,gridSize)));
 
-	cudaMemcpy(blockinfo_d,blockinfo_h,nBlocks_h[0]*sizeof(int3),cudaMemcpyHostToDevice);
-	status = cudaGetLastError();
-	if(status != cudaSuccess){fprintf(stderr, " kernel %s\n", cudaGetErrorString(status));}
+//	cudaMemcpy(blockinfo_d,blockinfo_h,nBlocks_h[0]*sizeof(int3),cudaMemcpyHostToDevice);
 
 	 // Move the particles
 
@@ -1535,7 +1613,7 @@ __host__ void XPlist::move_shared_sorted(float3 Pgridspacing, int3 Pgrid_i_dims,
 
 
 }
-
+/*
 void XPlist::cpu_move(float* phi,int* rho,float3 gridspacing,int3 griddims,float dt)
 {
 	float3 gridlims;
@@ -1623,6 +1701,7 @@ void XPlist::cpu_move(float* phi,int* rho,float3 gridspacing,int3 griddims,float
 	return;
 
 }
+*/
 
 /*
 __host__ void XPlist::reorder(void)

@@ -1,4 +1,5 @@
-
+#define __CUDACC__
+#define __cplusplus
 
 
 #include "cudamatrix_types.cuh"
@@ -18,6 +19,16 @@
 #include "host_defines.h"
 #include <iostream>
 #include "math.h"
+
+#  define CUDA_SAFE_KERNEL(call) {                                         \
+	call;																					\
+	cudaDeviceSynchronize();														\
+	cudaError err = cudaGetLastError();										\
+    if ( cudaSuccess != err) {                                               \
+        fprintf(stderr, "Cuda error in file '%s' in line %i : %s.\n",        \
+                __FILE__, __LINE__, cudaGetErrorString( err) );              \
+                exit(EXIT_FAILURE);                                                  \
+    } }
 
 
 

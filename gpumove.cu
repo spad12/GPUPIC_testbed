@@ -66,7 +66,7 @@ int main(void)
 	srand(13445);
 
 
-	int nptcls = pow(2.0,23.0);
+	int nptcls = pow(2.0,21.0);
 
 	dim3 cudaGridSize(1,1,1);
 	dim3 cudaBlockSize(1,1,1);
@@ -83,10 +83,6 @@ int main(void)
 
 	float* Phi_h = (float*)malloc(35*35*35*sizeof(float));
 	int* Rho_h = (int*)malloc(35*35*35*sizeof(int));
-
-	float* phi_test_in = (float*)(malloc(testx*testy*testz*sizeof(float)));
-	float* phi_test_out = (float*)(malloc(testx*testy*testz*sizeof(float)));
-	cudaMatrixf phi_test_d(testx,testy,testz);
 
 
 	// Grid Information
@@ -110,11 +106,6 @@ int main(void)
 	status = cudaGetLastError();
 	if(status != cudaSuccess){fprintf(stderr, "set phi %s\n", cudaGetErrorString(status));}
 
-	for(int i=0;i<35*35*35;i++)
-	{
-		Phi_h[i] = 0.05;
-
-	}
 
 	// Particle Information lists
 
@@ -228,7 +219,7 @@ int main(void)
 	for(int i = 0; i<100;i++)
 	{
 		particles_d.move_shared_sorted(gridspacing,grid_i_dims,Phi,rho,0.1);
-
+/*
 	//	printf(" \n finished one move step \n \n");
 		cudaThreadSynchronize();
 
@@ -250,7 +241,7 @@ int main(void)
 		cutStopTimer(timer2);
 		times[0].x += cutGetTimerValue(timer2);
 
-
+*/
 
 	}
 	cutStopTimer( timer);

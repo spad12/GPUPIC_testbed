@@ -27,6 +27,7 @@
 
 
 
+
 #  define CUDA_SAFE_KERNEL(call) {                                         \
 	call;																					\
 	cudaDeviceSynchronize();														\
@@ -42,6 +43,7 @@
 
 #define DEFRAG_BLOCK_SIZE 512
 #define BLOCK_SIZE 512
+
 
 
 class XPlist
@@ -1226,20 +1228,16 @@ void rough_test(int nptcls,int gridsize)
 }
 
 
+
 int main(void)
 {
 	cudaSetDevice(1);
 	int nptcls;
 	int gridsize;
-	for(int i=0;i<5;i++)
-	{
-		for(int j=256;j<8192;j*=2)
-		{
-			nptcls = pow(2,20+i);
-			gridsize = j;
-			rough_test(nptcls,gridsize);
-		}
-	}
+
+	nptcls = pow(2,24);
+	gridsize = 4096;
+	rough_test(nptcls,gridsize);
 
 
 	return 0;
