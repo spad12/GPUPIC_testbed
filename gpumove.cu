@@ -1,6 +1,6 @@
 
 #include "particleclass.cuh"
-
+#include <iostream>
 
 int* random_sorteddist( int* nptcls_out,int nx,int ny, int nz)
 {
@@ -48,13 +48,13 @@ __global__ void set_Phi(cudaMatrixf Phi)
 }
 
 //void gpupic(int nx, int ny, int nz, int nptcls, float3* times)
-int main(void)
+int main(int argc, char* argv[])
 {
 	cudaSetDevice(1);
 
-	int nx = 32;
-	int ny = 32;
-	int nz = 32;
+	int nx = 16;
+	int ny = 16;
+	int nz = 16;
 	int gridSize = nx*ny*nz;
 
 	int testx = 100;
@@ -62,11 +62,33 @@ int main(void)
 	int testz = 100;
 
 	float3 times[1];
+	float dt = 0.1;
 
 	srand(13445);
 
+	int nptcls = pow(2,22);
 
-	int nptcls = pow(2.0,21.0);
+	for(int i=0;i<argc;i++)
+	{
+		if(std::string(argv[i]) == "-nx")
+		{
+			nx = atoi(argv[i+1]);
+			ny = nx;
+			nz = nx;
+		}
+		else if(std::string(argv[i]) == "-nptcls")
+		{
+			int power = atoi(argv[i+1]);
+			nptcls = pow(2,power);
+		}
+		else if(std::string(argv[i]) == "-dt")
+		{
+			dt = atof(argv[i+1]);
+		}
+	}
+
+	printf("Launching GPUMOVE with nx = %i, nptcls = %i, and dt = %f\n",nx,nptcls,dt);
+
 
 	dim3 cudaGridSize(1,1,1);
 	dim3 cudaBlockSize(1,1,1);
@@ -79,6 +101,8 @@ int main(void)
 	unsigned int timer2 = 0;
 	cutCreateTimer(&timer);
 	cutCreateTimer(&timer2);
+
+	cutCreateTimer(&sort_timer);
 
 
 	float* Phi_h = (float*)malloc(35*35*35*sizeof(float));
@@ -111,7 +135,7 @@ int main(void)
 
 	 XPlist particles_h(nptcls,host);
 
-	XPlist particles_d2(nptcls,device);
+	//XPlist particles_d2(nptcls,device);
 
 	 XPlist particles_d(nptcls,device);
 
@@ -135,9 +159,9 @@ int main(void)
 
 	 // Copy particles from the host to the device
 
-	printf("Copying particle list to GPU");
+	//printf("Copying particle list to GPU");
 	 XPlistCopy(particles_d, particles_h,nptcls, cudaMemcpyHostToDevice);
-	 XPlistCopy(particles_d2, particles_h,nptcls, cudaMemcpyHostToDevice);
+	// XPlistCopy(particles_d2, particles_h,nptcls, cudaMemcpyHostToDevice);
 		cudaThreadSynchronize();
 
 
@@ -177,7 +201,7 @@ int main(void)
 
 	// See how much memory is allocated / free
 	cudaMemGetInfo(&free,&total);
-	printf("Free Memory = %i mb\nUsed mememory = %i mb\n",(int)(free)/(1<<20),(int)(total-free)/(1<<20));
+	//printf("Free Memory = %i mb\nUsed mememory = %i mb\n",(int)(free)/(1<<20),(int)(total-free)/(1<<20));
 
 
 	// Move Particles
@@ -214,11 +238,11 @@ int main(void)
 	 XPlistCopy(particles_d, particles_h,nptcls, cudaMemcpyHostToDevice);
 
 	 int test_index;
-	printf(" \n sorted shred move \n \n");
+	//printf(" \n sorted shred move \n \n");
 	cutStartTimer(timer);
 	for(int i = 0; i<100;i++)
 	{
-		particles_d.move_shared_sorted(gridspacing,grid_i_dims,Phi,rho,0.1);
+		particles_d.move_shared_sorted(gridspacing,grid_i_dims,Phi,rho,dt);
 /*
 	//	printf(" \n finished one move step \n \n");
 		cudaThreadSynchronize();
@@ -247,7 +271,7 @@ int main(void)
 	cutStopTimer( timer);
 	times[0].z= cutGetTimerValue(timer);
 	printf( "\nSorted, shared move took: %f (ms)\n\n", cutGetTimerValue( timer));
-	printf( "\nCopying potential took: %f (ms)\n\n", times[0].x);
+	//printf( "\nCopying potential took: %f (ms)\n\n", times[0].x);
 	cutResetTimer( timer );
 
 /*
@@ -265,6 +289,10 @@ int main(void)
 */
 	cutDeleteTimer( timer);
 	cutDeleteTimer( timer2);
+
+	float fraction_moved = ((float)nptcls_moved_total)/100.0/((float)nptcls);
+	printf("Fraction of particles that changed cells  = %f \n",fraction_moved);
+	printf( "Total Sort time was %f (ms)\n\n", cutGetTimerValue(sort_timer));
 
 	// Sort Particles
 
@@ -289,7 +317,7 @@ int main(void)
 
 	particles_h.XPlistFree();
 	particles_d.XPlistFree();
-	particles_d2.XPlistFree();
+	//particles_d2.XPlistFree();
 
 	Phi.cudaMatrixFree();
 	rho.cudaMatrixFree();

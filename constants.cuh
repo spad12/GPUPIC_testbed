@@ -32,7 +32,7 @@
 
 
 
-const int threadsPerBlock = 256;
+const int threadsPerBlock = 512;
 
 template<typename T>
 __device__

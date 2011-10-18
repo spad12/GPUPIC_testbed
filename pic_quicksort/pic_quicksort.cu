@@ -498,6 +498,7 @@ defrag_particle_list(XPlist g_particles,Particlebin* bin_tree,uint bin_level,int
 		break;
 	}
 
+
 	if(idx == 0)
 	{
 		bin_tree[binid] = parentbin;
@@ -1084,9 +1085,9 @@ void rough_test(int nptcls,int gridsize)
 		pbinindex_h[i] = i/(nptcls/gridsize);
 		pindex_h[i] = i;
 
-		if((rand()%1000) < 100)
+		if((rand()%1000) < 10)
 		{
-			temp_index = pbinindex_h[i] + rand()%5 - 2;
+			temp_index = pbinindex_h[i] + rand()%17 - 8;
 			if(temp_index < 0)
 			{
 				temp_index = gridsize-1;
